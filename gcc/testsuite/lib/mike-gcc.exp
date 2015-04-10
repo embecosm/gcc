@@ -17,6 +17,7 @@
 # This file was derived from mike-g++.exp written by Mike Stump <mrs@cygnus.com>
 
 load_lib target-utils.exp
+load_lib override.exp
 
 #
 # mike_cleanup -- remove any files that are created by the testcase
@@ -77,6 +78,14 @@ proc postbase  { src_code run groups args } {
 
     if ![regexp $target_regexp $target_triplet] {
 	unsupported $subdir/$src_code
+	return
+    }
+
+    # Check whether the test has been globally overridden
+    set test_override [query_override_script "$subdir/$src_code" "compile" "" ""]
+    if { $test_override == "UNSUPPORTED" } {
+	override_log "$subdir/$src_code now unsupported, skipping it"
+	unsupported "$subdir/$src_code"
 	return
     }
 

@@ -155,6 +155,11 @@ proc lto-obj { source dest optall optfile optstr xfaildata } {
 
     set compiler_conditional_xfail_data $xfaildata
 
+    # Handle global override, early exit if unsupported
+    if { [handle_override $testcase $testcase $optstr "compile" ""] == 1 } {
+        return
+    }
+
     # Allow C source files to mix freely with other languages
     if [ string match "*.c" $source ] then {
       set comp_output [gcc_target_compile "$source" "$dest" object $options]
@@ -180,6 +185,11 @@ proc lto-link-and-maybe-run { testname objlist dest optall optfile optstr } {
     global tool
     global compile_type
     global board_info
+
+    # Handle override, early exit if unsupported
+    if { [handle_override $testcase $testcase $optstr "link" ""] == 1 } {
+        return
+    }
 
     # Check that all of the objects were built successfully.
     foreach obj [split $objlist] {

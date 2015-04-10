@@ -32,6 +32,7 @@
 
 load_lib dg.exp
 load_lib gcc-dg.exp
+load_lib override.exp
 
 global PROFOPT_OPTIONS perf_delta
 
@@ -323,6 +324,12 @@ proc profopt-execute { src } {
 	set options "$extra_options"
 	lappend options "additional_flags=$option $extra_flags $profile_option"
 	set optstr "$option $profile_option"
+
+	# handle override and skip if unsupported
+	if { [handle_override $testcase $testcase $optstr "compile" ""] == 1 } {
+	    continue
+	}
+
 	set comp_output [${tool}_target_compile "$src" "$execname1" executable $options]
 	if ![${tool}_check_compile "$testcase compilation" $optstr $execname1 $comp_output] {
  	    unresolved "$testcase execution,   $optstr"
@@ -332,6 +339,11 @@ proc profopt-execute { src } {
 	}
 
 	# Run the profiled test.
+
+	# handle override and skip if unsupported
+	if { [handle_override $testcase $testcase $optstr "execute" ""] == 1 } {
+	    continue
+	}
 
 	set result [${tool}_load $execname1 "" ""]
 	set status [lindex $result 0]
@@ -370,6 +382,12 @@ proc profopt-execute { src } {
 	# Compile with feedback-directed optimizations.
 
 	set options "$extra_options"
+
+	# Handle override once again, skip on unsupported
+	if { [handle_override $testcase $testcase $optstr "compile" ""] == 1 } {
+	    continue
+	}
+
 	lappend options "additional_flags=$option $extra_flags $feedback_option"
 	set optstr "$option $feedback_option"
 	set comp_output [${tool}_target_compile "$src" "$execname2" "executable" $options]
@@ -383,6 +401,10 @@ proc profopt-execute { src } {
 	}
 
 	# Run the profile-directed optimized test.
+	# Handle whether the execution test should be run
+	if { [handle_override "$testcase execution" $testcase $optstr "execute" ""] == 1 } {
+	    continue
+	}
 
 	set result [${tool}_load "$execname2" "" ""]
 	set status [lindex $result 0]
@@ -421,6 +443,12 @@ proc profopt-execute { src } {
 	# Compile with normal optimizations.
 
 	set options "$extra_options"
+
+	# Handle override, skip on unsupported
+	if { [handle_override $testcase $testcase $optstr "compile" ""] == 1 } {
+	    continue
+	}
+
 	lappend options "additional_flags=$option"
 	set optstr "$option"
 	set comp_output [${tool}_target_compile "$src" "$execname3" "executable" $options]
@@ -431,6 +459,10 @@ proc profopt-execute { src } {
 	}
 
 	# Run the test with normal optimizations.
+	# Handle override, skip on unsupported
+	if { [handle_override "$testcase execution" $testcase $optstr "execute" ""] == 1 } {
+	    continue
+	}
 
 	set result [${tool}_load "$execname3" "" ""]
 	set status [lindex $result 0]

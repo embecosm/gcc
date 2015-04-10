@@ -18,6 +18,7 @@
 
 load_lib file-format.exp
 load_lib target-supports.exp
+load_lib override.exp
 
 # Make sure that the runtime list is re-evaluated for each multilib.
 proc objc-set-runtime-options { dowhat args } {
@@ -59,6 +60,12 @@ proc objc-set-runtime-options { dowhat args } {
               # the equivalent of -c.
 	      set compile_type "object"
 	      set output_file "trivial.o"
+
+	      # handle global override of this test skip if unsupported
+	      if { [handle_override "$srcdir/$subdir/trivial.m" "$srcdir/$subdir/trivial.m" "" "compile" ""] == 1 } {
+		continue
+	      }
+
 	      set comp_output [objc_target_compile \
 	        "$srcdir/$subdir/trivial.m" "$output_file" "$compile_type" $options]
 
@@ -70,6 +77,12 @@ proc objc-set-runtime-options { dowhat args } {
 	    }
 	    "execute" {
 	      set test_obj "trivial.exe"
+
+	      # handle global override of this tests compilation, skip if unsupported
+	      if { [handle_override "$srcdir/$subdir/trivial.m" "$srcdir/$subdir/trivial.m" "" "compile" ""] == 1 } {
+		continue
+	      }
+
 	      set comp_output [objc_target_compile \
 	        "$srcdir/$subdir/trivial.m" $test_obj "executable" $options]
 
@@ -78,6 +91,12 @@ proc objc-set-runtime-options { dowhat args } {
 	        remote_file build delete $test_obj
 	        continue;
 	      }
+
+	      # handle global override of execution, skip if unsupported
+	      if { [handle_override "$tmpdir/$test_obj execution" "$tmpdir/$test_obj" "" "execute" ""] == 1 } {
+		continue
+	      }
+
 	      set result [objc_load "$tmpdir/$test_obj" "" ""]
 	      set status [lindex $result 0]
 	      set output [lindex $result 1]
@@ -94,6 +113,12 @@ proc objc-set-runtime-options { dowhat args } {
 	  }
 	} else {
 	  set test_obj "trivial.exe"
+
+	  # handle global override of this tests compilation, skip if unsupported
+	  if { [handle_override "$srcdir/$subdir/trivial.m" "$srcdir/$subdir/trivial.m" "" "compile" ""] == 1 } {
+	    continue
+	  }
+
 	  set comp_output [objc_target_compile \
 	  "$srcdir/$subdir/trivial.m" $test_obj executable $options]
 
@@ -165,6 +190,11 @@ proc objc-torture-compile { src option } {
     # Run the compiler and analyze the results.
     set options ""
     lappend options "additional_flags=-w $option"
+
+    # handle global override, early exit if unsupported
+    if { [handle_override $testcase $testcase $option "compile" ""] == 1 } {
+	return
+    }
 
     set comp_output [objc_target_compile "$src" "$output" object $options]
     objc_check_compile $testcase $option $output $comp_output
@@ -245,6 +275,11 @@ proc objc-torture-execute { src args } {
 	remote_file build delete $execname
 	verbose "Testing $testcase, $option" 1
 
+	# handle global override, skip if unsupported
+	if { [handle_override $testcase $testcase $option "compile" ""] == 1 } {
+	    continue
+	}
+
 	set options ""
 	lappend options "additional_flags=-w $option"
 	if { $additional_flags != "" } {
@@ -297,6 +332,12 @@ proc objc-torture-execute { src args } {
 		set status $oldstatus
 	    }
 	}
+
+	# handle override of the execution test, skip if unsupported
+	if { [handle_override "$testcase execution" $testcase $option "execute" ""] == 1 } {
+	    continue
+	}
+
 	if { $skip == 0 } {
 	    set result [objc_load "$execname" "" ""]
 	    set status [lindex $result 0]

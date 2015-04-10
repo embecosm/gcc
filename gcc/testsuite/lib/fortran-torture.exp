@@ -23,6 +23,7 @@
 load_lib target-supports.exp
 load_lib fortran-modules.exp
 load_lib target-utils.exp
+load_lib override.exp
 
 # Return the list of options to use for fortran torture tests.
 # The default option list can be overridden by
@@ -118,6 +119,11 @@ proc fortran-torture-compile { src option } {
     }
 
     verbose "Testing $testcase, $option" 1
+
+    # handle override, skip if unsupported
+    if { [handle_override $testcase $testcase $option "compile" ""] == 1 } {
+	return
+    }
 
     # Run the compiler and get results in comp_output.
     set options ""
@@ -248,6 +254,12 @@ proc fortran-torture-execute { src } {
 	if { $additional_flags != "" } {
 	    lappend options "additional_flags=$additional_flags"
 	}
+
+	# handle override, skip if unsupported
+	if { [handle_override $testcase $testcase $option "compile" ""] == 1 } {
+	    continue
+	}
+
 	set comp_output [gfortran_target_compile "$src" "$executable" executable $options]
 
 	# See if we got something bad.
@@ -324,6 +336,11 @@ proc fortran-torture-execute { src } {
 
 	if [info exists torture_eval_before_execute] {
             set ignore_me [eval $torture_eval_before_execute]
+	}
+
+	# handle override of execution test, skip if unsupported
+	if { [handle_override "$testcase execution" $testcase $option "execute" ""] == 1 } {
+	    continue
 	}
 
 	# Run the testcase, and analyse the output.

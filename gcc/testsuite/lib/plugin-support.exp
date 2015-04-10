@@ -107,6 +107,11 @@ proc plugin-test-execute { plugin_src plugin_tests } {
 	set optstr "$includes $extra_flags -DIN_GCC -fPIC -shared -fno-rtti"
     }
 
+    # handle global override, skip if unsupported
+    if { [handle_override $testcase $testcase $optstr "compile" ""] == 1 } {
+	return
+    }
+
     # Temporarily switch to the environment for the plugin compiler.
     restore_ld_library_path_env_vars
     set status [remote_exec build "$PLUGINCC $plug_cflags $plugin_src $optstr -o $plugin_lib"]

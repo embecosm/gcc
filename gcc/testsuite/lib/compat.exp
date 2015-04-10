@@ -16,6 +16,7 @@
 
 # This file was written by Janis Johnson, <janis187@us.ibm.com>
 
+load_lib override.exp
 
 # Test interoperability of two compilers that follow the same ABI, or
 # compatibility of two versions of GCC.
@@ -99,6 +100,12 @@ proc compat-obj { source dest optall optfile optstr xfaildata } {
     lappend options "additional_flags=$optfile $optall"
 
     set compiler_conditional_xfail_data $xfaildata
+
+    # handle override, early exit if unsupported
+    if { [handle_override $testcase $testcase $optstr "compile" ""] == 1 } {
+	return
+    }
+
     set comp_output [${tool}_target_compile "$source" "$dest" object $options]
     ${tool}_check_compile "$testcase $dest compile" $optstr $dest $comp_output
 }
@@ -115,6 +122,11 @@ proc compat-obj { source dest optall optfile optstr xfaildata } {
 proc compat-run { testname objlist dest optall optfile optstr } {
     global testcase
     global tool
+
+    # handle if the testcase has been overridden, early exit on unsupported
+    if { [handle_override $testcase $testcase $optstr "link" ""] == 1 } {
+	return
+    }
 
     # Check that all of the objects were built successfully.
     foreach obj [split $objlist] {

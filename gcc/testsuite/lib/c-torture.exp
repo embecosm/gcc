@@ -21,6 +21,8 @@ load_lib file-format.exp
 load_lib target-libpath.exp
 load_lib target-utils.exp
 
+load_lib override.exp
+
 # The default option list can be overridden by
 # TORTURE_OPTIONS="{ { list1 } ... { listN } }"
 
@@ -106,6 +108,11 @@ proc c-torture-compile { src option } {
 
     verbose "Testing $testcase, $option" 1
 
+    # handle global overrides, early exit on unsupported
+    if { [handle_override $testcase $testcase $option "compile" ""] == 1 } {
+	return
+    }
+
     # Run the compiler and analyze the results.
     set options ""
     lappend options "additional_flags=-w $option"
@@ -190,6 +197,11 @@ proc c-torture-execute { sources args } {
 	file_on_host delete $execname
 	verbose "Testing $testcase, $option" 1
 
+	# handle overrides, skip if unsupported
+	if { [handle_override $testcase $testcase $option "compile" ""] == 1 } {
+	    continue
+	}
+
 	set options ""
 	lappend options "additional_flags=-w $option"
 	if { $additional_flags != "" } {
@@ -214,6 +226,11 @@ proc c-torture-execute { sources args } {
 
 	if [info exists torture_execute_xfail] {
 	    setup_xfail $torture_execute_xfail
+	}
+
+	# handle override of execution test, skip if unsupported
+	if { [handle_override "$testcase execution" $testcase $option "execute" ""] == 1 } {
+	    continue
 	}
 
 	if [info exists torture_eval_before_execute] {

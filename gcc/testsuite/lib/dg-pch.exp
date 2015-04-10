@@ -15,6 +15,7 @@
 # <http://www.gnu.org/licenses/>.
 
 load_lib copy-file.exp
+load_lib override.exp
 
 proc pch-init { args } {
     global pch_unsupported_debug pch_unsupported
@@ -88,6 +89,11 @@ proc dg-flags-pch { subdir test otherflags options suffix } {
 	     || ( $pch_unsupported_debug != 0 && [regexp " -g" " $flags"] ) } {
 	    verbose -log "$nshort unsupported because debug format conflicts with PCH"
 	    unsupported "$nshort $flags"
+	    continue
+	}
+
+	# Handle global override, skip on unsupported
+	if { [handle_override $nshort $nshort $flags "compile" ""] == 1 } {
 	    continue
 	}
 
